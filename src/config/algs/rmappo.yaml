@@ -1,0 +1,43 @@
+# --- RMAPPO specific parameters ---
+action_selector: multinomial
+epsilon_start: .5
+epsilon_finish: .01
+epsilon_anneal_time: 50000
+mask_before_softmax: True
+
+runner: "rmappo_parallel"
+
+buffer_size: 8
+batch_size_run: 8
+batch_size: 8
+
+run: "rmappo_run"
+lr: 0.0005
+
+mac: "rmappo_mac"
+
+# Use MAPPOLearner
+learner: "rmappo_learner"
+
+agent: "rmappo"
+rnn_hidden_dim: 64
+agent_output_type: "pi_logits"
+
+critic_type: "rcritic" # Make sure this matches a CentralV critic in your registry
+
+# --- RMAPPPO specific parameters ---
+eps_clip: 0.2
+epochs: 15
+mini_batch_size: 32 # Chunk batch size
+data_chunk_length: 10
+value_loss_coef: 1
+entropy_coef: 0.001
+grad_norm_clip: 10.0
+use_clipped_value_loss: True
+use_huber_loss: True
+huber_delta: 10.0
+gae_lambda: 0.95
+use_valuenorm: True
+is_normalize_advantages: True
+
+name: "rmappo"

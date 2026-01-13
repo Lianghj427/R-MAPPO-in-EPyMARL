@@ -1,0 +1,1 @@
+from .smacv2_wrapper import SMACv2Wrapper as smacv2

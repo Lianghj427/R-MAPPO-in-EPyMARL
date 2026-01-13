@@ -16,21 +16,14 @@ Compared to other PPO implementations in PyMARL, this project includes the follo
 ### 2. R-Centralized Critic
 * Introduces a GRU-based Centralized Critic (`RCentralVCritic`), enabling the critic to handle partial observability effectively.
 * The critic training also follows the Chunking mechanism with dynamic hidden state passing.
-
-### 3. Value Normalization & PopArt
-* Integrates `RunningMeanStd` to normalize Value Targets, significantly improving training stability.
-
-### 4. Correct GAE & Masking
-* Fixes dimension broadcasting issues in PyMARL's GAE calculation logic.
-* Strictly applies masks during the calculation of Policy Loss, Value Loss, and Entropy, excluding padding data from optimization.
-
+* 
 ## 📂 File Structure
 
 Key modified and added files:
 
 * `src/learners/rmappo_learner.py`: **The Core Learner**. Implements the Data Chunking generator (`_generate_data_chunks`) and the PPO update loop with hidden state passing (`_ppo_update`).
 * `src/modules/critics/r_centralV.py`: A new Centralized Critic with RNN support.
-* `src/config/algs/mappo.yaml`: Complete hyperparameter configuration aligned with the official MAPPO paper (e.g., `grad_norm_clip=10`, `use_valuenorm=True`).
+* `src/config/algs/rmappo.yaml`: Complete hyperparameter configuration aligned with the official MAPPO paper (e.g., `grad_norm_clip=10`, `use_valuenorm=True`).
 * `src/components/standarize_stream.py`: Fixed and enhanced `RunningMeanStd` to support `denormalize` operations.
 
 ## 🚀 Quick Start
@@ -45,21 +38,15 @@ pip install -r requirements.txt
 ```
 
 ### 2. Training
-Run experiments using the mappo configuration. Below is an example running on the SMAC map `3s5z`:
+Run experiments using the rmappo configuration. Below is an example running on the SMAC map `protoss_5_vs_5`:
 
 ```bash
-python3 src/main.py --config=mappo --env-config=sc2 with env_args.map_name=3s5z
-```
-
-You can override parameters like chunk length or batch size directly from the command line:
-
-```bash
-python3 src/main.py --config=mappo --env-config=sc2 with env_args.map_name=3s5z data_chunk_length=10 mini_batch_size=32
+python src/main.py --alg-config=rmappo ---env-config=smac_v2/smacv2_configs/protoss_5_vs_5 --manual_seed=464 --cuda_id=0
 ```
 
 ## ⚙️ Key Hyperparameters
 
-You can find these settings in `src/config/algs/mappo.yaml`:
+You can find these settings in `src/config/algs/rmappo.yaml`:
 
 | Parameter | Default | Description |
 | :--- | :--- | :--- |
