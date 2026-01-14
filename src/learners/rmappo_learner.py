@@ -309,8 +309,6 @@ class RMAPPOLearner:
         # actor_h_start is [B, 1, N, Dim] -> we need [B, N, Dim]
         init_h = actor_h_start[:, 0, :, :].contiguous()
         
-        # We assume BasicMAC has a way to accept hidden states or we hack it.
-        # BasicMAC usually does: self.hidden_states = ...
         self.mac.hidden_states = init_h
 
         critic_h = None
@@ -323,18 +321,6 @@ class RMAPPOLearner:
         
         # Rollout loop for the chunk
         for t in range(T):
-            # Construct a mini-batch for this step
-            # We need to reconstruct the inputs expected by MAC
-            # This is slightly inefficient as we reconstruct inputs, 
-            # but it ensures compatibility with BasicMAC._build_inputs
-            
-            # Hack: We need an "EpisodeBatch" like object for MAC
-            # We will just pass the raw tensors if we modify MAC, 
-            # but here we rely on the fact that we can call agent directly?
-            # No, MAC handles inputs (agent_id, last_action).
-            
-            # To avoid complex EpisodeBatch reconstruction, we call agent directly
-            # using the logic from BasicMAC._build_inputs manually here.
             last_action_input = last_actions_onehot[:, t]
             agent_inputs = self._build_inputs_from_tensors(
                 obs[:, t], 
@@ -343,17 +329,7 @@ class RMAPPOLearner:
             )
             alive_agent = alive_mask[:, t]
             
-            # Wait! t=0 of the CHUNK is not necessarily t=0 of episode.
-            # We need "last action" for t=0. 
-            # We should have collected "last_action" in the data collection phase if obs_last_action is True.
-            # Assuming _build_inputs handles this if we pass correct data.
-            
-            # Let's simplify: We assume the MAC's agent is an RNN Agent.
             agent_outs, self.mac.hidden_states = self.mac.agent(agent_inputs, self.mac.hidden_states, alive_agent)
-            
-            # Action Selection / Evaluation
-            # We need to evaluate the specific actions taken
-            # Use action selector logic or manual Categorical
             
             # Reshape for computation
             agent_outs = agent_outs.view(B, N, -1)
@@ -363,13 +339,6 @@ class RMAPPOLearner:
             probs = F.softmax(agent_outs, dim=-1)
 
             new_mac_out.append(probs)
-            
-            # pi_taken = th.gather(probs, dim=2, index=actions[:, t])
-            # log_pi = th.log(pi_taken + 1e-10)
-            # entropy = -th.sum(probs * th.log(probs + 1e-10), dim=-1)
-            
-            # new_log_probs.append(log_pi)
-            # dist_entropy.append(entropy)
 
             critic_inputs = self._build_critic_inputs_from_tensors(
                 state[:, t],
