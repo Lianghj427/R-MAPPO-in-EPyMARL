@@ -17,8 +17,17 @@ class RMAPPOAgent(nn.Module):
             self.layer_norm = LayerNorm(args.rnn_hidden_dim)
         
         if getattr(args, "use_orthogonal", False):
+
             orthogonal_init_(self.fc1)
-            orthogonal_init_(self.fc2, gain=args.gain)
+            orthogonal_init_(self.fc2, gain=0.01)
+
+            nn.init.orthogonal_(self.rnn.weight_ih, gain=1.0)
+            nn.init.orthogonal_(self.rnn.weight_hh, gain=1.0)
+            
+            if self.rnn.bias_ih is not None:
+                nn.init.constant_(self.rnn.bias_ih, 0)
+            if self.rnn.bias_hh is not None:
+                nn.init.constant_(self.rnn.bias_hh, 0)
 
     def init_hidden(self):
         # make hidden states on same device as model

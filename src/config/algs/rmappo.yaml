@@ -39,5 +39,6 @@ huber_delta: 10.0
 gae_lambda: 0.95
 use_valuenorm: True
 is_normalize_advantages: True
+use_orthogonal: True
 
 name: "rmappo"
