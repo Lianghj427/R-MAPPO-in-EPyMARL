@@ -1,4 +1,4 @@
-# --- RMAPPO specific parameters ---
+# --- MAPPO specific parameters ---
 action_selector: multinomial
 epsilon_start: .5
 epsilon_finish: .01
@@ -7,9 +7,9 @@ mask_before_softmax: True
 
 runner: "rmappo_parallel"
 
-buffer_size: 8
-batch_size_run: 8
-batch_size: 8
+buffer_size: 32
+batch_size_run: 32
+batch_size: 32
 
 run: "rmappo_run"
 lr: 0.0005
@@ -25,7 +25,7 @@ agent_output_type: "pi_logits"
 
 critic_type: "rcritic" # Make sure this matches a CentralV critic in your registry
 
-# --- RMAPPPO specific parameters ---
+# --- MAPPPO specific parameters ---
 eps_clip: 0.2
 epochs: 15
 mini_batch_size: 32 # Chunk batch size

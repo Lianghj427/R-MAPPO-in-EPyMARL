@@ -14,22 +14,39 @@ class RunningMeanStd(object):
         self.epsilon = epsilon
         self.device = device
 
-    def update(self, arr):
-        # Ensure input is a tensor on the correct device
+    def update(self, arr, mask=None):
+        """
+        arr: [Batch, Time, Agent, 1] 或 [Batch*Time*Agent, 1]
+        mask: [Batch, Time, Agent, 1] 或 [Batch*Time*Agent, 1]，也就是 alive_mask 或 filled_mask
+        """
+        # 1. 统一转为 Tensor
         if not isinstance(arr, torch.Tensor):
             arr = torch.tensor(arr, dtype=torch.float32, device=self.device)
-        elif arr.device != self.device:
-            arr = arr.to(self.device)
-        
-        # [核心修复]：将数据展平为 [N_Total_Samples, Features]
-        # 无论输入是 [Batch, Time, Agent, 1] 还是 [Batch, Features]
-        # 我们都只保留最后一个维度作为特征维度，其余维度全部合并
-        # 这样算出来的 mean/var 形状就是 (1,) 或者 (Features,)，而不是带有时间维度的形状
-        batch = arr.reshape(-1, arr.shape[-1])
             
+        # 2. 展平数据 [N, Features]
+        batch = arr.reshape(-1, arr.shape[-1])
+        
+        # 3. [关键修改] 应用 Mask 筛选
+        if mask is not None:
+            if not isinstance(mask, torch.Tensor):
+                mask = torch.tensor(mask, dtype=torch.float32, device=self.device)
+            
+            # 展平 Mask: [N, 1] -> [N]
+            mask = mask.reshape(-1)
+            
+            # 只保留 Mask > 0.5 (即为 1) 的有效数据
+            # bool indexing: batch[indices] 会选出有效行
+            batch = batch[mask > 0.5]
+            
+        # 4. 如果筛选后没数据了（极少见），直接返回
+        if batch.shape[0] < 1:
+            return
+
+        # 5. 计算当前有效 Batch 的统计量
         batch_mean = torch.mean(batch, dim=0)
         batch_var = torch.var(batch, dim=0)
         batch_count = batch.shape[0]
+        
         self.update_from_moments(batch_mean, batch_var, batch_count)
 
     def update_from_moments(self, batch_mean, batch_var, batch_count: int):
@@ -58,15 +75,11 @@ class RunningMeanStd(object):
     def normalize(self, batch):
         if not isinstance(batch, torch.Tensor):
             batch = torch.tensor(batch, dtype=torch.float32, device=self.device)
-        elif batch.device != self.device:
-            batch = batch.to(self.device)
             
         return (batch - self.mean) / torch.sqrt(self.var + self.epsilon)
 
     def denormalize(self, batch):
         if not isinstance(batch, torch.Tensor):
             batch = torch.tensor(batch, dtype=torch.float32, device=self.device)
-        elif batch.device != self.device:
-            batch = batch.to(self.device)
 
         return batch * torch.sqrt(self.var + self.epsilon) + self.mean

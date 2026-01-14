@@ -16,7 +16,7 @@ Compared to other PPO implementations in PyMARL, this project includes the follo
 ### 2. R-Centralized Critic
 * Introduces a GRU-based Centralized Critic (`RCentralVCritic`), enabling the critic to handle partial observability effectively.
 * The critic training also follows the Chunking mechanism with dynamic hidden state passing.
-* 
+
 ## 📂 File Structure
 
 Key modified and added files:
@@ -84,4 +84,4 @@ If you find this code useful, please cite the original MAPPO paper and the EPyMA
 ```
 
 ## 📝 License
-This project is licensed under the Apache License 2.0
+This project is licensed under the Apache License 2.0.
