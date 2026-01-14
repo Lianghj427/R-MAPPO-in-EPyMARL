@@ -76,6 +76,15 @@ class RMAPPOLearner:
         values = []
         actor_hidden_states = []
         critic_hidden_states = []
+
+        if self.args.standardise_rewards:
+            expanded_reward = rewards.repeat(1, 1, self.n_agents).unsqueeze(-1)
+            sum_rewards = (expanded_reward*alive_mask).sum()
+            count_rewards = alive_mask.sum()
+            mean_rewards = sum_rewards / (count_rewards + 1e-8)
+            var_rewards = (((expanded_reward - mean_rewards) ** 2) * alive_mask).sum() / (count_rewards + 1e-8)
+            std_rewards = th.sqrt(var_rewards)
+            rewards = (rewards - mean_rewards) / (std_rewards + 1e-8)
         
         self.mac.init_hidden(batch_size)
 
