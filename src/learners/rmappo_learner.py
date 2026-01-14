@@ -20,7 +20,6 @@ class RMAPPOLearner:
         self.ppo_epoch = args.epochs
         self.mini_batch_size = getattr(args, "mini_batch_size", 64) # Chunk size if using chunks
         self.data_chunk_length = getattr(args, "data_chunk_length", 10)
-        self.value_loss_coef = getattr(args, "value_loss_coef", 1)
         self.entropy_coef = getattr(args, "entropy_coef", 0.001)
         self.max_grad_norm = getattr(args, "grad_norm_clip", 0.5)
         self.use_clipped_value_loss = getattr(args, "use_clipped_value_loss", True)
