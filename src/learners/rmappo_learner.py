@@ -27,6 +27,7 @@ class RMAPPOLearner:
         self.huber_delta = getattr(args, "huber_delta", 10.0)
         self.is_normalize_advantages = getattr(args, "is_normalize_advantages", False)
         self.use_valuenorm = getattr(args, "use_valuenorm", True)
+        self.critic_rnn = getattr(args, "critic_rnn", False)
 
         # Agent Optimiser
         self.agent_params = list(mac.parameters())
@@ -89,14 +90,13 @@ class RMAPPOLearner:
 
         # Initialize critic hidden state if it has one (assuming it mimics MAC interface if RNN)
         c_hidden = None
-        if hasattr(self.critic, "init_hidden"):
+        if self.critic_rnn:
              c_hidden = self.critic.init_hidden(batch_size)
 
         # Forward pass over the entire episode to get hidden states and old probs
         with th.no_grad():
             for t in range(max_seq_length):
                 # Actor
-                # This can be stroed during roollout, but i won't use it here
                 actor_h = self.mac.hidden_states.clone()
                 actor_hidden_states.append(actor_h)
                 agent_outs = self.mac.forward(batch, t=t)

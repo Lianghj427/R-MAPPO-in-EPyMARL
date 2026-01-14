@@ -14,8 +14,12 @@ class RCentralVCritic(nn.Module):
         self.output_type = "v"
 
         self.fc1 = nn.Linear(input_shape, args.rnn_hidden_dim)
-        self.rnn = nn.GRUCell(args.rnn_hidden_dim, args.rnn_hidden_dim)
-        self.fc2 = nn.Linear(args.rnn_hidden_dim, 1)
+        self.fc3 = nn.Linear(args.rnn_hidden_dim, 1)
+
+        if args.critic_rnn:
+            self.rnn = nn.GRUCell(args.rnn_hidden_dim, args.rnn_hidden_dim)
+        else:
+            self.fc2 = nn.Linear(args.rnn_hidden_dim, args.rnn_hidden_dim)
 
     def init_hidden(self, batch_size):
         return self.fc1.weight.new(batch_size, self.n_agents, self.args.rnn_hidden_dim).zero_()
@@ -28,15 +32,18 @@ class RCentralVCritic(nn.Module):
         if hidden_state is not None:
             h_in = hidden_state.reshape(-1, self.args.rnn_hidden_dim)
             h = self.rnn(x, h_in)
-        else:
-            h = F.relu(x)
+            q = self.fc3(h)
+            q = q.reshape(bs, self.n_agents, 1)
+            h = h.reshape(bs, self.n_agents, self.args.rnn_hidden_dim)
 
-        q = self.fc2(h)
-        
-        q = q.reshape(bs, self.n_agents, 1)
-        h = h.reshape(bs, self.n_agents, self.args.rnn_hidden_dim)
-        
-        return q, h
+            return q, h
+        else:
+            # 如果没有提供 hidden_state，比如第一步，或者非序列调用（不推荐）
+            h = F.relu(self.fc2(x)) # 降级为 MLP 行为，但通常 learner 会传入 h
+            q = self.fc3(h)
+            q = q.reshape(bs, self.n_agents, 1)
+
+            return q
     
     def forward_step(self, inputs, hidden_state):
 
@@ -47,10 +54,10 @@ class RCentralVCritic(nn.Module):
         # GRU Cell
         if hidden_state is not None:
             h = self.rnn(x, hidden_state)
-            q = self.fc2(h)
+            q = self.fc3(h)
         else:
             h = None
-            q = self.fc2(F.relu(x))
+            q = self.fc3(F.relu(self.fc2(x)))
 
         return q, h
 

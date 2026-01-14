@@ -24,6 +24,7 @@ rnn_hidden_dim: 64
 agent_output_type: "pi_logits"
 
 critic_type: "rcritic" # Make sure this matches a CentralV critic in your registry
+critic_rnn: False
 
 # --- MAPPPO specific parameters ---
 eps_clip: 0.2
